@@ -8,293 +8,141 @@ from json import *
 import tkinter as tk
 from tkinter import messagebox
 
-from dotenv import load_dotenv
-import requests as rq
-import time
-import sys
-from logo import logo
-import os
-from json import dump
-import tkinter as tk
-from tkinter import messagebox
-
-
 root = tk.Tk()
 root.withdraw()
 root.attributes("-topmost", True)
-
-
-def clear_screen():
-    os.system("cls" if os.name == "nt" else "clear")
-
-
 if __name__ == "__main__":
-
     try:
 
-        print(logo)
 
-        user_web = input("\n\nPlease Enter The Web Domain: ")
-
-        # Clean domain input
-        user_web = user_web.strip().lower()
-        user_web = user_web.replace("https://", "")
-        user_web = user_web.replace("http://", "")
-        user_web = user_web.replace("www.", "")
-        user_web = user_web.split("/")[0]
-
-
-        choices = int(
-            input(
-                "1 - SubDomains\n"
-                "2 - Webinfo\n"
-            )
-        )
-
-
-        if choices not in [1, 2]:
-            raise Exception("Invalid choice")
-
-
-        print("\n\nGetting the info", end="")
+        def clear_screen():
+            os.system("cls" if os.name == "nt" else "clear")
+        print(f"{logo}")
+        user_web = input(f"{"\n" * 2}Please Enter The Web Domin: ")
+        xcv = user_web
+        choices = int(input("1 - SubDomains\n2 - Webinfo\n"))
+        if choices != 1 and choices != 2:
+            raise Exception("")
+        print(f"{"\n" * 3}Getting the info", end="")
 
 
         start_time = time.time()
-
-        while time.time() - start_time < 5:
-
+        while time.time() - start_time < 19:
             for i in range(4):
-
-                sys.stdout.write(
-                    "\rGetting the info" +
-                    "." * i +
-                    " " * (4 - i)
-                )
-
+                if time.time() - start_time >= 17:
+                    break
+                sys.stdout.write("\rGetting the info" + "." * i + " " * (4 - i))
                 sys.stdout.flush()
                 time.sleep(0.5)
 
 
 
-        # Load API keys
-
+        # API KEYS
         load_dotenv()
-
         ip_key = os.getenv("ip")
-        vt_key = os.getenv("dom")
+        g_sub_key = os.getenv("dom")
 
 
-        if not ip_key or not vt_key:
-            raise Exception("Missing API keys in .env")
 
+        # Web info Key
 
-        # VirusTotal headers
-
-        vt_headers = {
-            "x-Apikey": vt_key
+        Web_info_key = {
+            "x-Apikey" : g_sub_key
         }
 
 
-        # VirusTotal requests
+        # Web info API Calls
 
-        web_info = rq.get(
-            f"https://www.virustotal.com/api/v3/domains/{user_web}",
-            headers=vt_headers
-        )
-
-
-        sub_domains = rq.get(
-            f"https://www.virustotal.com/api/v3/domains/{user_web}/subdomains",
-            headers=vt_headers
-        )
-
-
-        if web_info.status_code != 200:
-            raise Exception(
-                f"VirusTotal Error: {web_info.status_code}"
-            )
-
-
-        web_data = web_info.json()
-        subs = sub_domains.json()
+        web_info= rq.get(f"https://www.virustotal.com/api/v3/domains/{user_web}",headers=Web_info_key)
+        sub_domins = rq.get(f"https://www.virustotal.com/api/v3/domains/{user_web}/subdomains",headers=Web_info_key)
 
 
 
-        # Get website IP
 
-        dns_records = (
-            web_data["data"]
-            ["attributes"]
-            .get("last_dns_records", [])
-        )
+        # Web info JSON form
+
+        subs = sub_domins.json()
+        web_ginfo = web_info.json()
 
 
-        web_ip = None
+        # Web IP prams
 
-
-        for record in dns_records:
-
-            if record.get("type") == "A":
-                web_ip = record.get("value")
-                break
-
-
-        if web_ip is None:
-            raise Exception(
-                "No IPv4 address found"
-            )
-
-
-        # AbuseIPDB
-
-        abuse_params = {
+        Web_current_ip = web_ginfo["data"]["attributes"]["last_dns_records"]
+        for x in Web_current_ip:
+            if x["type"] == "A":
+                web_ip = x["value"]
+        Web_ip_prams = {
             "ipAddress": web_ip,
             "maxAgeInDays": 90
         }
-
-
-        abuse_headers = {
+        Web_ip_key = {
             "Key": ip_key,
             "Accept": "application/json"
         }
 
-
-        ip_request = rq.get(
-            "https://api.abuseipdb.com/api/v2/check",
-            params=abuse_params,
-            headers=abuse_headers
-        )
+        # Web IP API Calls
+        ip = rq.get("https://api.abuseipdb.com/api/v2/check",params=Web_ip_prams,headers=Web_ip_key)
 
 
-        if ip_request.status_code != 200:
-            raise Exception(
-                f"AbuseIPDB Error: {ip_request.status_code}"
-            )
+        # Web IP info JSON form
+
+        ip_json = ip.json()
+
+        web_ip = ip_json["data"]["ipAddress"]
+        web_ip_vertion = ip_json["data"]["ipVersion"]
 
 
-        ip_data = ip_request.json()
-        ip_info = ip_data["data"]
-
-        web_ip_version = ip_info["ipVersion"]
-        reports = ip_info["totalReports"]
-
+        # clearing the above
         clear_screen()
 
-        # Show Subdomains
 
+        # Web_Domains
         if choices == 1:
+            print(f"{"\n" * 3}Web SubDomains:")
+            for item in subs["data"]:
+                print(item["id"])
 
-            print("\n\nWeb SubDomains:\n")
 
-            if "data" in subs and len(subs["data"]) > 0:
+        # Web_Reputation
 
-                for item in subs["data"]:
-                    print(item["id"])
+        clearnce = web_ginfo["data"]["attributes"]["last_analysis_stats"]["malicious"]
+        clearnce2 = web_ginfo["data"]["attributes"]["last_analysis_stats"]["suspicious"]
+        reports = ip_json["data"]["totalReports"]
 
-            else:
 
-                print("No subdomains found")
 
-        # Website reputation
 
-        analysis = (
-            web_data["data"]
-            ["attributes"]
-            ["last_analysis_stats"]
-        )
 
-        malicious = analysis["malicious"]
-        suspicious = analysis["suspicious"]
 
         if choices == 2:
-
-            if malicious > 0 or suspicious > 0:
-
+            if int(clearnce) > 0 or int(clearnce2) > 0 :
+                print(f"{"\n" * 3}🔴 This Web is Not Clear ")
+            elif int(clearnce) == 0 and int(clearnce2 ) == 0:
+                print(f"{"\n" * 3}🟢 This Web is Clear")
                 print(
-                    "\n\n🔴 This Web is Not Clear"
-                )
+                f"The Web Current Domain: {web_ginfo["data"]["id"]}\nThe Web Server IP is: {web_ip}\nThe Web ipVersion: IPv{web_ip_vertion}\nTheres ({reports}) Total Reports on This Web ")
 
 
-            else:
-
-                print(
-                    "\n\n🟢 This Web is Clear"
-                )
-
-            print(
-                f"""
-    The Web Current Domain: {user_web}
-    The Web Server IP: {web_ip}
-    The Web IP Version: IPv{web_ip_version}
-    Total Reports: {reports}
-    """
-            )
-
-        # Save JSON result
-
-        save = input(
-            "\n\nDo You Want To Save The Result into JSON file (y/n)? "
-        )
-
-        if save.lower().startswith("y"):
-            result = {
-
-                "domain_info": {
-
-                    "domain": user_web,
-
-                    "server_ip": web_ip,
-
-                    "ip_version": web_ip_version,
-
-                    "total_reports": reports
-
+        # saving the res
+        save = input(f"{"\n" * 2}Do You Want To Save The Result into A json file (y/n) ?")
+        if "y" in save:
+            data = {
+                f"{user_web}_info":{
+                    "The Web Current Domain": web_ginfo["data"]["id"],
+                    "The Web Server IP is" : web_ip,
+                    "The Web ipVersion" : web_ip_vertion,
+                    "TotalReports":reports
                 },
-
-                "subdomains": [
-
-                    item["id"]
-
-                    for item in subs.get("data", [])
-
-                ]
+                f"{user_web}_subdomains":{
+                    "subdomains":[x["id"] for x in subs["data"]]
+                }
 
             }
+            with open(f"{user_web}.json" , "w") as x:
+                dump(data,x,indent=4)
 
-            with open(
-                    f"{user_web}.json",
-                    "w"
-            ) as file:
-                dump(
-                    result,
-                    file,
-                    indent=4
-                )
-
-            print(
-                f"\nSaved as {user_web}.json"
-            )
-
-
-
-    except Exception as e:
-
-        messagebox.showinfo(
-            "Dev-NotHex",
-            f"""
-    Error:
-
-    Make sure the domain is valid.
-
-    Example:
-    google.com ✔️
-
-    Not:
-    https://google.com/path ❌
-    """
-        )
+    except:
+        messagebox.showinfo("Dev-NotHex",
+                            "Make Sure Your Choice is Valid & Make Sure The Domin is valid \nexample.com ✔️\nhttpx://xxx.example.com/ ❌")
 
     root.destroy()
-
-
-

@@ -52,6 +52,16 @@ Enter the target website when prompted.
 - Python 3.10+
 - Internet connection
 
+## API Keys Setup
+
+This tool requires API keys from:
+
+- AbuseIPDB (Free API key available)
+- VirusTotal (Free API key available)
+
+Create your own keys, then add them to a `.env` file:
+
+
 ## Disclaimer
 
 This project is intended for educational purposes and authorized security testing only.
