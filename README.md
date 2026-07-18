@@ -29,7 +29,7 @@ example.com
 ## Installation
 
 ```bash
-git clone https://github.com/NotHex/WebScanner.git
+git clone https://github.com/iNotHex/WebScanner.git
 cd WebScanner
 ```
 
